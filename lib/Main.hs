@@ -1,11 +1,10 @@
 --import qualified Prelude          as P
 import Data.Array.Accelerate      as A
 import Data.Array.Accelerate.CUDA as C
+import Numeric.AD                 as AD
 import Control.Monad
-import Numeric.AD as AD
 
-
-import AccAD as AccAD
+import AccAD                      as AccAD
 
 type Matrix a = Array DIM2 a
 
@@ -42,16 +41,25 @@ testFunc2 :: (Num a) => [a] -> a
 testFunc2 = Prelude.sum . Prelude.map (\e -> e*e) 
 
 normSq :: Acc (Vector Float) -> Acc (A.Scalar Float)
-normSq arr = fold (+) 0 (A.map (\el -> el * el) arr)
+normSq arr = fold (+) 0 (A.map square arr)
 
 toVec ::  Int -> [Float] -> Vector Float
 toVec dim = fromList (Z :. dim)
 
+testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
+testEltDeriv = A.map . lift (AD.diff' cube)
+
+square :: Num a => a -> a
+square x = x * x
+
+cube :: Num a => a -> a
+cube x = x * x * x
 
 main :: IO ()
 main = do
   dimString <- getLine
   let dim = read dimString :: Int
-  print . C.run . normSq . use . toVec dim $ [1..]
+  --print . C.run . normSq . use . toVec dim $ [1..]
+  print . C.run . testEltDeriv . use . toVec dim $ [1..]
   --print $ grad testFunc [1, 2, 3]
 
