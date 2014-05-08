@@ -66,9 +66,9 @@ cube   x = x * x * x
 --testAccFunc :: AccFunc (Z :. Int) (Exp Int) (Z :. Int) (Exp Int)
 --testAccFunc = Map id (testAccFunc)
 --
-sh  = Z :. (5 :: Int)
-x   = 5 :: Int
-arr = InArray sh x 
+-- sh  = Z :. (5 :: Int)
+-- x   = 5 :: Int
+-- arr = InArray sh x 
 --mArr = Map id arr sh
 --fmArr = Fold (+) mArr sh
 
