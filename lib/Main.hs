@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeOperators #-}
 --import qualified Prelude          as P
 import Data.Array.Accelerate      as A
 import Data.Array.Accelerate.CUDA as C
@@ -61,6 +62,15 @@ square x = x * x
 
 cube   :: Num a => a -> a
 cube   x = x * x * x
+
+--testAccFunc :: AccFunc (Z :. Int) (Exp Int) (Z :. Int) (Exp Int)
+--testAccFunc = Map id (testAccFunc)
+--
+sh  = Z :. (5 :: Int)
+x   = 5 :: Int
+arr = InArray sh x
+mArr = Map id arr sh
+fmArr = Fold (+) mArr sh
 
 main :: IO ()
 main = do

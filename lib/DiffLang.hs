@@ -1,6 +1,6 @@
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE Rank2Types #-}
-module DiffLang (AccFunc) where
+module DiffLang (AccFunc(..)) where
 
 import Data.Array.Accelerate      as A
 --import Numeric.AD                 as AD
@@ -10,14 +10,17 @@ import Data.Array.Accelerate      as A
                                     --Fold (scalIn -> scalIn -> scalOut) (AbstractArray scalIn)
 
 data AccFunc sh1 a sh2 b = 
-  forall sh0 z. (Shape sh0, Elt z) => Map  (a -> b)      (AccFunc sh0 z sh1 a) |
-  forall sh0 z. (Shape sh0, Elt z) => Fold (a -> a -> b) (AccFunc sh0 z sh1 a) |
-  InArray sh2 b
+  forall sh0 z. (Shape sh1, Shape sh2, Elt a, Elt b) =>
+    Map  (a -> b)      (AccFunc sh0 z sh1 a) sh2 |
+  forall sh0 z. (Shape sh1, Shape sh2, Elt a, Elt b) =>
+    Fold (a -> a -> b) (AccFunc sh0 z sh1 a) sh2 |
+  (Shape sh2, Elt b) =>
+    InArray sh2 b
 
---instance Show => AccFunc (sh1, a) (sh2, b) where
-  --show (Map  f var)     = "Map: "   ++ show var
-  --show (Fold f var)     = "Fold: "  ++ show var
-  --show (InArray sh arr) = "Array: " ++ show arr
+instance Show (AccFunc sh1 a sh2 b) where
+  show (Map  f var sh)  = "(Map: "   Prelude.++ show (show sh, show var) Prelude.++ ")"
+  show (Fold f var sh)  = "(Fold: "  Prelude.++ show (show sh, show var) Prelude.++ ")"
+  show (InArray sh arr) = "(Array: " Prelude.++ show (show sh, show arr) Prelude.++ ")"
 
 --data AbstractArray scalIn scalOut = NowArray scal |
                                     --EventuallyArray (AccFunc arrIn scal scal)
