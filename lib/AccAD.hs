@@ -1,8 +1,10 @@
+{-# LANGUAGE GADTs                 #-}
 module AccAD (diffAcc) where
 
---import Data.Array.Accelerate      as A
---import Numeric.AD                 as AD
+import Data.Array.Accelerate      as A
+import Numeric.AD                 as AD
 
+-- import qualified Prelude
 import DiffLang
 
 
@@ -13,8 +15,12 @@ import DiffLang
 --diffAcc = undefined
 
 
---diffAcc :: AccFunc a b -> AccFunc a b
-diffAcc = undefined
+-- diffAcc :: (PreAcc acc exp (Array sh e) -> PreAcc acc exp (Array sh e')) 
+        -- ->  PreAcc acc exp (Array sh e) -> PreAcc acc exp (Array sh e')
+-- diffAcc = Prelude.undefined
+diffAcc :: PreAcc acc exp (Array sh e') ->  PreAcc acc exp (Array sh e')
+-- diffAcc (Map g arr) = Map (diff g) arr
+diffAcc = Prelude.undefined
 
 
 

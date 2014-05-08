@@ -4,9 +4,9 @@
 {-# LANGUAGE Rank2Types #-}
 module DiffLang (PreAcc(..), AccSubset) where
 
-import qualified Prelude
+-- import qualified Prelude
 import Data.Array.Accelerate      as A
-import qualified Data.Array.Accelerate.Smart as Smrt
+import qualified Data.Array.Accelerate.Smart as Smart
 --import Numeric.AD                 as AD
 
 
@@ -57,14 +57,6 @@ data PreAcc acc exp as where
                 -- ->        acc     arrs
                 -- -> PreAcc acc exp a
 -- 
-  Use           :: Arrays arrs
-                => arrs
-                -> PreAcc acc exp arrs
--- 
-  -- Unit          :: Elt e
-                -- => exp e
-                -- -> PreAcc acc exp (Scalar e)
--- 
   -- Generate      :: (Shape sh, Elt e)
                 -- => exp sh
                 -- -> (Exp sh -> exp e)
@@ -91,7 +83,16 @@ data PreAcc acc exp as where
                 -- -> exp slix
                 -- -> PreAcc acc exp (Array (SliceShape slix) e)
 -- 
-  Map           :: (Shape sh, Elt e, Elt e')
+
+  Use           :: Arrays arrs
+                => arrs
+                -> PreAcc acc exp arrs
+
+  Unit          :: Elt e
+                => exp e
+                -> PreAcc acc exp (Scalar e)
+
+  Map           :: (Shape sh, Elt e, Elt e', IsNum e, IsNum e')
                 => (Exp e -> exp e')
                 -> acc (Array sh e)
                 -> PreAcc acc exp (Array sh e')
@@ -188,7 +189,12 @@ data PreAcc acc exp as where
                 -- -> acc (Array sh b)
                 -- -> PreAcc acc exp (Array sh c)
 
-newtype AccSubset a = AccSubset (PreAcc AccSubset Exp a)
+-- instance Show (PreAcc acc exp as) where
+  -- show (Map func arr) = "(Map: "   Prelude.++ show arr  Prelude.++ ")"
+  -- show (Fold f var sh)  = "(Fold: "  Prelude.++ show (show sh, show var) Prelude.++ ")"
+  -- show (InArray sh arr) = "(Array: " Prelude.++ show (show sh, show arr) Prelude.++ ")"
+
+data AccSubset a = AccSubset (PreAcc AccSubset Exp a)
 
 --acc exp as
 
@@ -227,6 +233,9 @@ newtype AccSubset a = AccSubset (PreAcc AccSubset Exp a)
 --compileToAcc (Fold f var sh) arr = A.fold f 0.0 $ compileToAcc var arr
 --compileToAcc (InArray sh b)  arr = arr
 
+compileToAcc :: (Shape sh, Elt e) => PreAcc acc exp (Array sh e) -> Acc (Array sh e)
+-- compileToAcc (Map g arr) = A.map g $ compileToAcc arr
+compileToAcc _ = Prelude.undefined
 
 
 

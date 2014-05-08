@@ -63,14 +63,8 @@ square x = x * x
 cube   :: Num a => a -> a
 cube   x = x * x * x
 
-dim = 5 :: Int
-sh = Z :. dim
-arr1 = toVec dim [1..]
-
-gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
--- gadtTestMap :: PreAcc (PreAcc  Exp (Array sh e')
-gadtTestMap = Map square (Use arr1)
-gadtTestFoldMap = Fold (+) (constant 0.0) $ Map square (Use arr1)
+sh = Z :. (5 :: Int)
+arr1 = toVec sh [1..]
 
 --testAccFunc :: AccFunc (Z :. Int) (Exp Int) (Z :. Int) (Exp Int)
 --testAccFunc = Map id (testAccFunc)
