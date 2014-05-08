@@ -2,11 +2,11 @@
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE Rank2Types #-}
-module DiffLang (PreAcc(..), AccSubset) where
+module DiffLang () where
 
 -- import qualified Prelude
-import Data.Array.Accelerate      as A
-import qualified Data.Array.Accelerate.Smart as Smart
+-- import Data.Array.Accelerate      as A
+-- import Data.Array.Accelerate.Smart as Smart
 --import Numeric.AD                 as AD
 
 
@@ -22,7 +22,7 @@ import qualified Data.Array.Accelerate.Smart as Smart
     -- InArray sh2 b
 
 
-data PreAcc acc exp as where
+-- data PreAcc acc exp as where
     -- Needed for conversion to de Bruijn form
   -- Pipe          :: (Arrays as, Arrays bs, Arrays cs)
                 -- => (Acc as -> Acc bs)           -- see comment above on why 'Acc' and not 'acc'
@@ -84,30 +84,30 @@ data PreAcc acc exp as where
                 -- -> PreAcc acc exp (Array (SliceShape slix) e)
 -- 
 
-  Use           :: Arrays arrs
-                => arrs
-                -> PreAcc acc exp arrs
-
-  Unit          :: Elt e
-                => exp e
-                -> PreAcc acc exp (Scalar e)
-
-  Map           :: (Shape sh, Elt e, Elt e', IsNum e, IsNum e')
-                => (Exp e -> exp e')
-                -> acc (Array sh e)
-                -> PreAcc acc exp (Array sh e')
-
-  ZipWith       :: (Shape sh, Elt e1, Elt e2, Elt e3)
-                => (Exp e1 -> Exp e2 -> exp e3)
-                -> acc (Array sh e1)
-                -> acc (Array sh e2)
-                -> PreAcc acc exp (Array sh e3)
-
-  Fold          :: (Shape sh, Elt e)
-                => (Exp e -> Exp e -> exp e)
-                -> exp e
-                -> acc (Array (sh:.Int) e)
-                -> PreAcc acc exp (Array sh e)
+  -- Use           :: Arrays arrs
+                -- => arrs
+                -- -> PreAcc acc exp arrs
+-- 
+  -- Unit          :: Elt e
+                -- => exp e
+                -- -> PreAcc acc exp (Scalar e)
+-- 
+  -- Map           :: (Shape sh, Elt e, Elt e', IsNum e, IsNum e')
+                -- => (Exp e -> exp e')
+                -- -> acc (Array sh e)
+                -- -> PreAcc acc exp (Array sh e')
+-- 
+  -- ZipWith       :: (Shape sh, Elt e1, Elt e2, Elt e3)
+                -- => (Exp e1 -> Exp e2 -> exp e3)
+                -- -> acc (Array sh e1)
+                -- -> acc (Array sh e2)
+                -- -> PreAcc acc exp (Array sh e3)
+-- 
+  -- Fold          :: (Shape sh, Elt e)
+                -- => (Exp e -> Exp e -> exp e)
+                -- -> exp e
+                -- -> acc (Array (sh:.Int) e)
+                -- -> PreAcc acc exp (Array sh e)
 -- 
   -- Fold1         :: (Shape sh, Elt e)
                 -- => (Exp e -> Exp e -> exp e)
@@ -194,7 +194,7 @@ data PreAcc acc exp as where
   -- show (Fold f var sh)  = "(Fold: "  Prelude.++ show (show sh, show var) Prelude.++ ")"
   -- show (InArray sh arr) = "(Array: " Prelude.++ show (show sh, show arr) Prelude.++ ")"
 
-data AccSubset a = AccSubset (PreAcc AccSubset Exp a)
+-- data AccSubset a = AccSubset (PreAcc AccSubset Exp a)
 
 --acc exp as
 
@@ -233,9 +233,9 @@ data AccSubset a = AccSubset (PreAcc AccSubset Exp a)
 --compileToAcc (Fold f var sh) arr = A.fold f 0.0 $ compileToAcc var arr
 --compileToAcc (InArray sh b)  arr = arr
 
-compileToAcc :: (Shape sh, Elt e) => PreAcc acc exp (Array sh e) -> Acc (Array sh e)
+-- compileToAcc :: (Shape sh, Elt e) => PreAcc acc exp (Array sh e) -> Acc (Array sh e)
 -- compileToAcc (Map g arr) = A.map g $ compileToAcc arr
-compileToAcc _ = Prelude.undefined
+-- compileToAcc _ = Prelude.undefined
 
 
 

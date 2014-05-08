@@ -1,9 +1,11 @@
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE GADTs                 #-}
 --import qualified Prelude          as P
 import Data.Array.Accelerate      as A
 import Data.Array.Accelerate.CUDA as C
 import Numeric.AD                 as AD
 import Control.Monad
+import Data.Array.Accelerate.Smart as Smart
 
 import AccAD
 import DiffLang
@@ -57,6 +59,10 @@ testEltDeriv = A.map $ lift . diff' cube
 --testEltDerivHigh :: Acc (Vector Float) -> Acc (Vector Float)
 --testEltDerivHigh = diffAcc (A.map cube)
 
+cubeMap :: Acc (Vector Float) -> Acc (Vector Float)
+cubeMap = A.map cube
+
+
 square :: Num a => a -> a
 square x = x * x
 
@@ -67,10 +73,10 @@ dim = 5 :: Int
 sh = Z :. dim
 arr1 = toVec dim [1..]
 
-gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
+-- gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
 -- gadtTestMap :: PreAcc (PreAcc  Exp (Array sh e')
-gadtTestMap = Map square (Use arr1)
-gadtTestFoldMap = Fold (+) (constant 0.0) $ Map square (Use arr1)
+-- gadtTestMap = Map square (Use arr1)
+-- gadtTestFoldMap = Fold (+) (constant 0.0) $ Map square (Use arr1)
 
 --testAccFunc :: AccFunc (Z :. Int) (Exp Int) (Z :. Int) (Exp Int)
 --testAccFunc = Map id (testAccFunc)
@@ -86,6 +92,7 @@ main = do
   dimString <- getLine
   let dim = read dimString :: Int
   --print . C.run . normSq . use . toVec dim $ [1..]
-  print . C.run . testEltDeriv . use . toVec dim $ [1..]
+  print . reachIntoFunc $ normSq . use . toVec dim $ [1..]
+  -- print . C.run . testEltDeriv . use . toVec dim $ [1..]
   --print $ grad testFunc [1, 2, 3]
 
