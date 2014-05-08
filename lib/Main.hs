@@ -68,9 +68,9 @@ cube   x = x * x * x
 --
 sh  = Z :. (5 :: Int)
 x   = 5 :: Int
-arr = InArray sh x
-mArr = Map id arr sh
-fmArr = Fold (+) mArr sh
+arr = InArray sh x 
+--mArr = Map id arr sh
+--fmArr = Fold (+) mArr sh
 
 main :: IO ()
 main = do

@@ -31,11 +31,11 @@ instance Show (AccFunc sh1 a sh2 b) where
   --AccFunc (s1, Exp a) (s2, Exp b) -> AccFunc (s2, Exp b) (s3, Exp c) -> AccFunc (s1, Exp a) (s3, Exp c)
 --composeAccFunc = undefined
 
---compileToAcc :: (Shape sh1, Shape sh2, Elt a, Elt b) =>
-  --AccFunc (sh1, a) (sh2, b) -> Acc (Array sh2 b)
---compileToAcc (Map  f var)     = A.map  f     $ compileToAcc var
---compileToAcc (Fold f var)     = A.fold f 0.0 $ compileToAcc var
---compileToAcc (InArray sh arr) = Acc (Array sh array)
+--compileToAcc :: (Shape sh2, Elt b) =>
+  --AccFunc sh1 a sh2 b -> Acc (Array sh1 a) -> Acc (Array sh2 b)
+--compileToAcc (Map  f var sh) arr = A.map  f     $ compileToAcc var arr
+--compileToAcc (Fold f var sh) arr = A.fold f 0.0 $ compileToAcc var arr
+--compileToAcc (InArray sh b)  arr = arr
 
 
 
