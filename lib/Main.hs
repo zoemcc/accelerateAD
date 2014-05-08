@@ -46,14 +46,23 @@ normSq arr = fold (+) 0 (A.map square arr)
 toVec ::  Int -> [Float] -> Vector Float
 toVec dim = fromList (Z :. dim)
 
+--testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
+--testEltDeriv arr = A.map cubeAndSquare3 arr
+
 testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
-testEltDeriv = A.map . lift (AD.diff' cube)
+testEltDeriv = A.map $ lift . AD.diff' cube
+
+
+--cubeAndSquare3 :: Exp a -> Exp (a, a)
+--cubeAndSquare3 x = lift (fx, f'x)
+  --where 
+    --(fx, f'x) = AD.diff' cube x
 
 square :: Num a => a -> a
 square x = x * x
 
-cube :: Num a => a -> a
-cube x = x * x * x
+cube   :: Num a => a -> a
+cube   x = x * x * x
 
 main :: IO ()
 main = do
