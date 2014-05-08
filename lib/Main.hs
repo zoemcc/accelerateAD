@@ -4,7 +4,8 @@ import Data.Array.Accelerate.CUDA as C
 import Numeric.AD                 as AD
 import Control.Monad
 
-import AccAD                      as AccAD
+import AccAD
+import DiffLang
 
 type Matrix a = Array DIM2 a
 
@@ -50,13 +51,10 @@ toVec dim = fromList (Z :. dim)
 --testEltDeriv arr = A.map cubeAndSquare3 arr
 
 testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
-testEltDeriv = A.map $ lift . AD.diff' cube
+testEltDeriv = A.map $ lift . diff' cube
 
-
---cubeAndSquare3 :: Exp a -> Exp (a, a)
---cubeAndSquare3 x = lift (fx, f'x)
-  --where 
-    --(fx, f'x) = AD.diff' cube x
+--testEltDerivHigh :: Acc (Vector Float) -> Acc (Vector Float)
+--testEltDerivHigh = diffAcc (A.map cube)
 
 square :: Num a => a -> a
 square x = x * x

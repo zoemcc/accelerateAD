@@ -23,7 +23,7 @@ Flag cuda
 executable accelerate-sandbox
   main-is:             Main.hs
 
-  other-modules:       AccAD
+  other-modules:       AccAD DiffLang
   -- other-extensions:    
   build-depends:       base                            >= 4.6          && <4.7,
                        ad                              >= 4.0,
