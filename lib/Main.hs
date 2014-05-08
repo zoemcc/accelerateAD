@@ -1,9 +1,12 @@
-import qualified Prelude          as P
+--import qualified Prelude          as P
 import Data.Array.Accelerate      as A
 import Data.Array.Accelerate.CUDA as C
-import Numeric.AD.Mode.Reverse as AD
+import Control.Monad
+import Numeric.AD as AD
 
---type Vector a = Array DIM1 a
+
+import AccAD as AccAD
+
 type Matrix a = Array DIM2 a
 
 --matMul :: (IsNum e, Elt e) => Acc (Matrix e) -> Acc (Matrix e) -> Acc (Vector e)
@@ -38,11 +41,17 @@ testFunc [x, y, z] = x*x*z + y*z + y
 testFunc2 :: (Num a) => [a] -> a
 testFunc2 = Prelude.sum . Prelude.map (\e -> e*e) 
 
-normSq :: Acc (Vector Float) -> Acc (Scalar Float)
-normSq arr = fold (+) 0 (map (\el -> el * el) arr)
+normSq :: Acc (Vector Float) -> Acc (A.Scalar Float)
+normSq arr = fold (+) 0 (A.map (\el -> el * el) arr)
+
+toVec ::  Int -> [Float] -> Vector Float
+toVec dim = fromList (Z :. dim)
+
 
 main :: IO ()
 main = do
-  print . C.run . normSq . use $ (fromList [1, 2, 3, 4] :: Vector Float)
+  dimString <- getLine
+  let dim = read dimString :: Int
+  print . C.run . normSq . use . toVec dim $ [1..]
   --print $ grad testFunc [1, 2, 3]
 
