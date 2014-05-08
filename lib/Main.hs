@@ -1,12 +1,12 @@
 {-# LANGUAGE TypeOperators #-}
---import qualified Prelude          as P
+import Prelude          as P
 import Data.Array.Accelerate      as A
 import Data.Array.Accelerate.CUDA as C
 import Numeric.AD                 as AD
 import Control.Monad
 
 import AccAD
-import DiffLang
+import DiffLang as L
 
 type Matrix a = Array DIM2 a
 
@@ -40,18 +40,18 @@ testFunc :: (Num a) => [a] -> a
 testFunc [x, y, z] = x*x*z + y*z + y
 
 testFunc2 :: (Num a) => [a] -> a
-testFunc2 = Prelude.sum . Prelude.map (\e -> e*e) 
+testFunc2 = P.sum . P.map (\e -> e*e) 
 
 normSq :: Acc (Vector Float) -> Acc (A.Scalar Float)
 normSq arr = fold (+) 0 (A.map square arr)
 
-toVec ::  Int -> [Float] -> Vector Float
+toVec ::  Int -> [Float] -> A.Vector Float
 toVec dim = fromList (Z :. dim)
 
 --testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
 --testEltDeriv arr = A.map cubeAndSquare3 arr
 
-testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
+testEltDeriv :: Acc (A.Vector Float) -> Acc (A.Vector (Float, Float))
 testEltDeriv = A.map $ lift . diff' cube
 
 --testEltDerivHigh :: Acc (Vector Float) -> Acc (Vector Float)
@@ -67,10 +67,17 @@ dim = 5 :: Int
 sh = Z :. dim
 arr1 = toVec dim [1..]
 
-gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
+--gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
 -- gadtTestMap :: PreAcc (PreAcc  Exp (Array sh e')
-gadtTestMap = Map square (Use arr1)
-gadtTestFoldMap = Fold (+) (constant 0.0) $ Map square (Use arr1)
+gadtTestMap :: A.Vector Float -> AccSubset (A.Vector Float)
+gadtTestMap = L.map square . gadtTestUse
+gadtTestUse :: A.Vector Float -> AccSubset (A.Vector Float)
+gadtTestUse arr = L.use arr
+--gadtTestFoldMap = L.Fold (+) (constant 0.0) $ Map square (Use arr1)
+
+compileTest :: A.Vector Float -> Acc (A.Vector Float)
+compileTest = compileToAcc . gadtTestMap
+-- compileTest = P.undefined
 
 --testAccFunc :: AccFunc (Z :. Int) (Exp Int) (Z :. Int) (Exp Int)
 --testAccFunc = Map id (testAccFunc)
@@ -86,6 +93,6 @@ main = do
   dimString <- getLine
   let dim = read dimString :: Int
   --print . C.run . normSq . use . toVec dim $ [1..]
-  print . C.run . testEltDeriv . use . toVec dim $ [1..]
+  print . C.run . compileTest . toVec dim $ [1..]
   --print $ grad testFunc [1, 2, 3]
 

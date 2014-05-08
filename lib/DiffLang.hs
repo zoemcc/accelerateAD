@@ -1,12 +1,15 @@
 {-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE FlexibleInstances     #-}
 {-# LANGUAGE GADTs                 #-}
 {-# LANGUAGE TypeOperators         #-}
+{-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE Rank2Types #-}
-module DiffLang (PreAcc(..), AccSubset) where
+module DiffLang (PreAcc(..), AccSubset(..), compileToAcc, map, use) where
 
--- import qualified Prelude
-import Data.Array.Accelerate      as A
-import qualified Data.Array.Accelerate.Smart as Smart
+import qualified Prelude as P
+import qualified Data.Array.Accelerate      as A
+import qualified Data.Array.Accelerate.Smart as S
+-- import qualified Data.Array.Accelerate.Language as L
 --import Numeric.AD                 as AD
 
 
@@ -84,30 +87,30 @@ data PreAcc acc exp as where
                 -- -> PreAcc acc exp (Array (SliceShape slix) e)
 -- 
 
-  Use           :: Arrays arrs
+  Use           :: A.Arrays arrs
                 => arrs
                 -> PreAcc acc exp arrs
 
-  Unit          :: Elt e
+  Unit          :: A.Elt e
                 => exp e
-                -> PreAcc acc exp (Scalar e)
+                -> PreAcc acc exp (A.Scalar e)
 
-  Map           :: (Shape sh, Elt e, Elt e', IsNum e, IsNum e')
-                => (Exp e -> exp e')
-                -> acc (Array sh e)
-                -> PreAcc acc exp (Array sh e')
+  Map           :: (A.Shape sh, A.Elt e, A.Elt e', P.Num e, P.Num e')
+                => (A.Exp e -> exp e')
+                -> acc (A.Array sh e)
+                -> PreAcc acc exp (A.Array sh e')
 
-  ZipWith       :: (Shape sh, Elt e1, Elt e2, Elt e3)
-                => (Exp e1 -> Exp e2 -> exp e3)
-                -> acc (Array sh e1)
-                -> acc (Array sh e2)
-                -> PreAcc acc exp (Array sh e3)
+  ZipWith       :: (A.Shape sh, A.Elt e1, A.Elt e2, A.Elt e3)
+                => (A.Exp e1 -> A.Exp e2 -> exp e3)
+                -> acc (A.Array sh e1)
+                -> acc (A.Array sh e2)
+                -> PreAcc acc exp (A.Array sh e3)
 
-  Fold          :: (Shape sh, Elt e)
-                => (Exp e -> Exp e -> exp e)
+  Fold          :: (A.Shape sh, A.Elt e)
+                => (A.Exp e -> A.Exp e -> exp e)
                 -> exp e
-                -> acc (Array (sh:.Int) e)
-                -> PreAcc acc exp (Array sh e)
+                -> acc (A.Array (sh A.:. P.Int) e)
+                -> PreAcc acc exp (A.Array sh e)
 -- 
   -- Fold1         :: (Shape sh, Elt e)
                 -- => (Exp e -> Exp e -> exp e)
@@ -194,7 +197,23 @@ data PreAcc acc exp as where
   -- show (Fold f var sh)  = "(Fold: "  Prelude.++ show (show sh, show var) Prelude.++ ")"
   -- show (InArray sh arr) = "(Array: " Prelude.++ show (show sh, show arr) Prelude.++ ")"
 
-data AccSubset a = AccSubset (PreAcc AccSubset Exp a)
+newtype AccSubset a = AccSubset (PreAcc AccSubset A.Exp a)
+
+map :: (A.Shape ix, A.Elt a, A.Elt b, P.Num a, P.Num b)
+    => (A.Exp a -> A.Exp b)
+    -> AccSubset (A.Array ix a)
+    -> AccSubset (A.Array ix b)
+map = AccSubset $$ Map
+
+use :: A.Arrays arrays => arrays -> AccSubset arrays
+use = AccSubset P.. Use
+
+
+infixr 0 $$
+($$) :: (b -> a) -> (c -> d -> b) -> c -> d -> a
+(f $$ g) x y = f (g x y)
+
+-- deriving instance Smart.Typeable1 AccSubset
 
 --acc exp as
 
@@ -233,9 +252,14 @@ data AccSubset a = AccSubset (PreAcc AccSubset Exp a)
 --compileToAcc (Fold f var sh) arr = A.fold f 0.0 $ compileToAcc var arr
 --compileToAcc (InArray sh b)  arr = arr
 
-compileToAcc :: (Shape sh, Elt e) => PreAcc acc exp (Array sh e) -> Acc (Array sh e)
--- compileToAcc (Map g arr) = A.map g $ compileToAcc arr
-compileToAcc _ = Prelude.undefined
+compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
+compileToAcc (AccSubset (Use arr))   = A.use   P.$ arr -- S.Map g $ compileToAccUnwrapped arr
+compileToAcc (AccSubset (Map g arr)) = A.map g P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
+compileToAcc _ = P.undefined
+
+--compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
+--compileToAcc input = S.Acc (compileToAccUnwrapped input)
+
 
 
 
