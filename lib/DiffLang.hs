@@ -9,6 +9,7 @@ module DiffLang (PreAcc(..), AccSubset(..), compileToAcc, map, use) where
 import qualified Prelude as P
 import qualified Data.Array.Accelerate      as A
 import qualified Data.Array.Accelerate.Smart as S
+import qualified Data.Array.Accelerate.Type      as T
 -- import qualified Data.Array.Accelerate.Language as L
 --import Numeric.AD                 as AD
 
@@ -95,10 +96,15 @@ data PreAcc acc exp as where
                 => exp e
                 -> PreAcc acc exp (A.Scalar e)
 
-  Map           :: (A.Shape sh, A.Elt e, A.Elt e', P.Num e, P.Num e')
-                => (A.Exp e -> exp e')
+  -- Map           :: (A.Shape sh, A.Elt e, A.Elt e', T.IsNum e, T.IsNum e')
+                -- => (A.Exp e -> exp e')
+                -- -> acc (A.Array sh e)
+                -- -> PreAcc acc exp (A.Array sh e')
+
+  Map           :: (A.Shape sh, A.Elt e, T.IsNum e)
+                => (A.Exp e -> exp e)
                 -> acc (A.Array sh e)
-                -> PreAcc acc exp (A.Array sh e')
+                -> PreAcc acc exp (A.Array sh e)
 
   ZipWith       :: (A.Shape sh, A.Elt e1, A.Elt e2, A.Elt e3)
                 => (A.Exp e1 -> A.Exp e2 -> exp e3)
@@ -199,10 +205,10 @@ data PreAcc acc exp as where
 
 newtype AccSubset a = AccSubset (PreAcc AccSubset A.Exp a)
 
-map :: (A.Shape ix, A.Elt a, A.Elt b, P.Num a, P.Num b)
-    => (A.Exp a -> A.Exp b)
+map :: (A.Shape ix, A.Elt a, T.IsNum a)
+    => (A.Exp a -> A.Exp a)
     -> AccSubset (A.Array ix a)
-    -> AccSubset (A.Array ix b)
+    -> AccSubset (A.Array ix a)
 map = AccSubset $$ Map
 
 use :: A.Arrays arrays => arrays -> AccSubset arrays

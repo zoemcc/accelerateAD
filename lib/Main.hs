@@ -69,7 +69,7 @@ arr1 = toVec dim [1..]
 
 --gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
 -- gadtTestMap :: PreAcc (PreAcc  Exp (Array sh e')
-gadtTestMap :: A.Vector Float -> AccSubset (A.Vector Float)
+gadtTestMap ::  A.Vector Float -> AccSubset (A.Vector Float)
 gadtTestMap = L.map square . gadtTestUse
 gadtTestUse :: A.Vector Float -> AccSubset (A.Vector Float)
 gadtTestUse arr = L.use arr
