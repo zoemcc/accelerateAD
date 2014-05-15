@@ -56,8 +56,8 @@ gadtTestUse :: A.Vector Float -> AccSubset (A.Vector Float)
 gadtTestUse arr = L.use arr
 --gadtTestFoldMap = L.Fold (+) (constant 0.0) $ Map square (Use arr1)
 
-compileTest :: A.Vector Float -> Acc (A.Vector Float)
-compileTest = compileToAcc . gadtTestMap
+--compileTest :: A.Vector Float -> Acc (A.Vector Float)
+--compileTest = compileToAcc . gadtTestMap
 -- compileTest = P.undefined
 
 --testAccFunc :: AccFunc (Z :. Int) (Exp Int) (Z :. Int) (Exp Int)
@@ -106,7 +106,7 @@ main = do
   dimString <- getLine
   let dimAny = read dimString :: Int
   --print . C.run . normSq . use . toVec dimAny $ [1..]
-  print . C.run . compileTest . toVec dimAny $ [1..]
+  --print . C.run . compileTest . toVec dimAny $ [1..]
   --print $ diff testDoubleSquareDiff 1.0
   --let x = diff $ auto testExp (auto 3.0)
   print $ testDoubleSquareDiff 3

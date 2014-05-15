@@ -26,7 +26,6 @@ import qualified Data.Array.Accelerate.Type      as T
     -- InArray sh2 b
 
 
-data PreAcc acc exp as where
     -- Needed for conversion to de Bruijn form
   -- Pipe          :: (Arrays as, Arrays bs, Arrays cs)
                 -- => (Acc as -> Acc bs)           -- see comment above on why 'Acc' and not 'acc'
@@ -87,6 +86,7 @@ data PreAcc acc exp as where
                 -- -> exp slix
                 -- -> PreAcc acc exp (Array (SliceShape slix) e)
 -- 
+data PreAcc acc exp as where
 
   Use           :: A.Arrays arrs
                 => arrs
@@ -101,10 +101,10 @@ data PreAcc acc exp as where
                 -- -> acc (A.Array sh e)
                 -- -> PreAcc acc exp (A.Array sh e')
 
-  Map           :: (A.Shape sh, A.Elt e, T.IsNum e)
-                => (A.Exp e -> exp e)
+  Map           :: (A.Shape sh, A.Elt e, T.IsNum e, A.Elt e', T.IsNum e')
+                => (e -> e')
                 -> acc (A.Array sh e)
-                -> PreAcc acc exp (A.Array sh e)
+                -> PreAcc acc exp (A.Array sh e')
 
   ZipWith       :: (A.Shape sh, A.Elt e1, A.Elt e2, A.Elt e3)
                 => (A.Exp e1 -> A.Exp e2 -> exp e3)
@@ -206,7 +206,7 @@ data PreAcc acc exp as where
 newtype AccSubset a = AccSubset (PreAcc AccSubset A.Exp a)
 
 map :: (A.Shape ix, A.Elt a, T.IsNum a)
-    => (A.Exp a -> A.Exp a)
+    => (a -> a)
     -> AccSubset (A.Array ix a)
     -> AccSubset (A.Array ix a)
 map = AccSubset $$ Map
@@ -260,7 +260,7 @@ infixr 0 $$
 
 compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
 compileToAcc (AccSubset (Use arr))   = A.use   P.$ arr -- S.Map g $ compileToAccUnwrapped arr
-compileToAcc (AccSubset (Map g arr)) = A.map g P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
+compileToAcc (AccSubset (Map g arr)) = A.map (A.lift1 g) P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
 compileToAcc _ = P.undefined
 
 --compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
