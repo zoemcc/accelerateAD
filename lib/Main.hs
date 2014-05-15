@@ -1,43 +1,23 @@
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE Rank2Types #-}
 import Prelude          as P
 import Data.Array.Accelerate      as A
 import Data.Array.Accelerate.CUDA as C
-import Numeric.AD                 as AD
+import Numeric.AD.Mode            as AD 
+import Numeric.AD.Mode.Forward    as Forward
 import Control.Monad
+import Data.Number.Erf
+import Data.Traversable
 
 import AccAD
 import DiffLang as L
 
-type Matrix a = Array DIM2 a
-
---matMul :: (IsNum e, Elt e) => Acc (Matrix e) -> Acc (Matrix e) -> Acc (Vector e)
---matMul arr brr
-  -- = A.fold (+) 0
-  -- $ A.zipWith (*) arrRepl brrRepl
-  --where
-    --Z :. rowsA :. _     = unlift (shape arr)    --:: Z :. Int :. Int
-    --Z :. _     :. colsB = unlift (shape brr)    --:: Z :. Int :. Int
---
-    --arrRepl             = A.replicate (lift $ Z :. All   :. colsB :.  All) arr
-    --brrRepl             = A.replicate (lift $ Z :. rowsA :. All   :.  All) (A.transpose brr)
-
-
---matVMul :: (IsNum e, Elt e) => Acc (Matrix e) -> Acc (Vector e) -> Acc (Vector e)
---matVMul arr brr
-  -- = A.fold (+) 0
-  -- $ A.zipWith (*) arr brrRepl
-  --where
-    --Z :. rowsA :. _     = unlift (shape arr)    --:: Z :. Int :. Int
-    --brrRepl             = A.replicate (lift $ Z :. rowsA :. All) brr
-
---main :: IO ()
---main = print . C.run $ matVMul (lift mat) (lift vec)
-  --where
-    --mat = A.fromList (Z :. 3 :. 3) [1..10]
-    --vec = A.fromList (Z :. 3)                   [1..3]
-
 testFunc :: (Num a) => [a] -> a
 testFunc [x, y, z] = x*x*z + y*z + y
+
+-- 
+testFuncDouble :: [Double] -> Double
+testFuncDouble [x, y, z] = x*x*z + y*z + y
 
 testFunc2 :: (Num a) => [a] -> a
 testFunc2 = P.sum . P.map (\e -> e*e) 
@@ -46,7 +26,7 @@ normSq :: Acc (Vector Float) -> Acc (A.Scalar Float)
 normSq arr = fold (+) 0 (A.map square arr)
 
 toVec ::  Int -> [Float] -> A.Vector Float
-toVec dim = fromList (Z :. dim)
+toVec dim5 = fromList (Z :. dim5)
 
 --testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
 --testEltDeriv arr = A.map cubeAndSquare3 arr
@@ -63,9 +43,10 @@ square x = x * x
 cube   :: Num a => a -> a
 cube   x = x * x * x
 
-dim = 5 :: Int
-sh = Z :. dim
-arr1 = toVec dim [1..]
+dim5 = 5 :: Int
+sh = Z :. dim5
+arr1 = toVec dim5 [1..]
+arr1Acc = A.use $ toVec dim5 [1..]
 
 --gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
 -- gadtTestMap :: PreAcc (PreAcc  Exp (Array sh e')
@@ -87,12 +68,48 @@ compileTest = compileToAcc . gadtTestMap
 -- arr = InArray sh x 
 --mArr = Map id arr sh
 --fmArr = Fold (+) mArr sh
+--
+
+testSquare :: (Num a) => a -> a
+testSquare x = x * x
+
+runDouble :: (Double -> b) -> Int -> b
+runDouble = runF
+
+runF :: Num a => (a -> b) -> Int -> b
+runF f x = f $ P.fromIntegral x
+
+testExp :: (IsNum a, Elt a) => Exp a -> Exp a
+testExp x = x * x
+
+testDoubleSquareDiff :: Int -> Double
+testDoubleSquareDiff = runDouble $ \x -> Forward.diff testSquare x
+
+
+--testDoubleSquareDiff :: (Mode s) => AD s Double -> AD s Double
+--testDoubleSquareDiff x = x * x
+
+
+--diffFunc :: (Num a, Num b) => (a -> b) -> (forall s. (AD s (Forward a)) -> AD s (Forward b))
+--diffFunc f x = runAD x
+
+--diff f a = tangent $ apply f a
+--diff f a = Rank1.diff (runAD.f.AD)
+--diff f a = tangent $ apply (runAD.f.AD) a
+
+testDiff :: (Num a, Mode s) => AD s a -> AD s a
+testDiff x = x + 3
+
 
 main :: IO ()
 main = do
   dimString <- getLine
-  let dim = read dimString :: Int
-  --print . C.run . normSq . use . toVec dim $ [1..]
-  print . C.run . compileTest . toVec dim $ [1..]
-  --print $ grad testFunc [1, 2, 3]
+  let dimAny = read dimString :: Int
+  --print . C.run . normSq . use . toVec dimAny $ [1..]
+  print . C.run . compileTest . toVec dimAny $ [1..]
+  --print $ diff testDoubleSquareDiff 1.0
+  --let x = diff $ auto testExp (auto 3.0)
+  print $ testDoubleSquareDiff 3
+  return ()
+
 
