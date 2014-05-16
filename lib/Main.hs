@@ -106,7 +106,8 @@ main = do
   dimString <- getLine
   let dimAny = read dimString :: Int
   --print . C.run . normSq . use . toVec dimAny $ [1..]
-  print . C.run . compileTest . toVec dimAny $ [1..]
+  print . C.run . testEltDeriv . A.use . toVec dimAny $ [1..]
+  --print . C.run . compileTest . toVec dimAny $ [1..]
   --print $ diff testDoubleSquareDiff 1.0
   --let x = diff $ auto testExp (auto 3.0)
   print $ testDoubleSquareDiff 3
