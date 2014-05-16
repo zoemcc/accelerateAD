@@ -22,7 +22,7 @@ import DiffLang as L
 -- diffAcc = Prelude.undefined
 diffAcc :: (A.Elt e, T.IsNum e) => L.AccSubset (A.Array sh e) ->  L.AccSubset (A.Array sh e)
 diffAcc (L.AccSubset (L.Use arr))      = L.AccSubset (L.Use arr)
---diffAcc (L.AccSubset (L.Map g arr))    = L.map (A.lift . AD.diff func) arr
+--diffAcc (L.AccSubset (L.Map g arr))    = L.map (AD.diff g :: A.Exp e -> A.Exp e) arr
                                          --where func 
       -- need somehow to get AD to function on Exp's....
 --diffAcc (L.AccSubset (L.Fold g a arr)) = L.fold (diff g) 0 arr

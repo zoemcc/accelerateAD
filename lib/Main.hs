@@ -26,7 +26,7 @@ normSq :: Acc (Vector Float) -> Acc (A.Scalar Float)
 normSq arr = fold (+) 0 (A.map square arr)
 
 toVec ::  Int -> [Float] -> A.Vector Float
-toVec dim5 = fromList (Z :. dim5)
+toVec dimTest = fromList (Z :. dimTest)
 
 --testEltDeriv :: Acc (Vector Float) -> Acc (Vector (Float, Float))
 --testEltDeriv arr = A.map cubeAndSquare3 arr
@@ -43,22 +43,25 @@ square x = x * x
 cube   :: Num a => a -> a
 cube   x = x * x * x
 
-dim5 = 5 :: Int
-sh = Z :. dim5
-arr1 = toVec dim5 [1..]
-arr1Acc = A.use $ toVec dim5 [1..]
+dimTest = 5 :: Int
+sh = Z :. dimTest
+arr1 = toVec dimTest [1..]
+arr1Acc = A.use $ toVec dimTest [1..]
 
 --gadtTestFold = Fold (+) (constant 0.0) (Use arr1)
 -- gadtTestMap :: PreAcc (PreAcc  Exp (Array sh e')
 gadtTestMap ::  A.Vector Float -> AccSubset (A.Vector Float)
 gadtTestMap = L.map square . gadtTestUse
 gadtTestUse :: A.Vector Float -> AccSubset (A.Vector Float)
-gadtTestUse arr = L.use arr
+gadtTestUse = L.use
 --gadtTestFoldMap = L.Fold (+) (constant 0.0) $ Map square (Use arr1)
 
-compileTest :: A.Vector Float -> Acc (A.Vector Float)
-compileTest = compileToAcc . gadtTestMap
+compileTestMap :: A.Vector Float -> Acc (A.Vector Float)
+compileTestMap = compileToAcc . gadtTestMap
 -- compileTest = P.undefined
+
+compileTestUse :: A.Vector Float -> Acc (A.Vector Float)
+compileTestUse = compileToAcc . gadtTestUse
 
 --testAccFunc :: AccFunc (Z :. Int) (Exp Int) (Z :. Int) (Exp Int)
 --testAccFunc = Map id (testAccFunc)
@@ -106,7 +109,7 @@ main = do
   dimString <- getLine
   let dimAny = read dimString :: Int
   --print . C.run . normSq . use . toVec dimAny $ [1..]
-  print . C.run . compileTest . toVec dimAny $ [1..]
+  --print . C.run . compileTest . toVec dimAny $ [1..]
   --print $ diff testDoubleSquareDiff 1.0
   --let x = diff $ auto testExp (auto 3.0)
   print $ testDoubleSquareDiff 3

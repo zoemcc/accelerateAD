@@ -26,7 +26,7 @@ import qualified Data.Array.Accelerate.Type      as T
     -- InArray sh2 b
 
 
-data PreAcc acc exp as where
+data PreAcc acc as where
     -- Needed for conversion to de Bruijn form
   -- Pipe          :: (Arrays as, Arrays bs, Arrays cs)
                 -- => (Acc as -> Acc bs)           -- see comment above on why 'Acc' and not 'acc'
@@ -90,11 +90,11 @@ data PreAcc acc exp as where
 
   Use           :: A.Arrays arrs
                 => arrs
-                -> PreAcc acc exp arrs
+                -> PreAcc acc arrs
 
   Unit          :: A.Elt e
-                => exp e
-                -> PreAcc acc exp (A.Scalar e)
+                => e
+                -> PreAcc acc (A.Scalar e)
 
   -- Map           :: (A.Shape sh, A.Elt e, A.Elt e', T.IsNum e, T.IsNum e')
                 -- => (A.Exp e -> exp e')
@@ -102,21 +102,21 @@ data PreAcc acc exp as where
                 -- -> PreAcc acc exp (A.Array sh e')
 
   Map           :: (A.Shape sh, A.Elt e, T.IsNum e)
-                => (A.Exp e -> exp e)
+                => (e -> e)
                 -> acc (A.Array sh e)
-                -> PreAcc acc exp (A.Array sh e)
+                -> PreAcc acc (A.Array sh e)
 
   ZipWith       :: (A.Shape sh, A.Elt e1, A.Elt e2, A.Elt e3)
-                => (A.Exp e1 -> A.Exp e2 -> exp e3)
+                => (e1 -> e2 -> e3)
                 -> acc (A.Array sh e1)
                 -> acc (A.Array sh e2)
-                -> PreAcc acc exp (A.Array sh e3)
+                -> PreAcc acc (A.Array sh e3)
 
   Fold          :: (A.Shape sh, A.Elt e)
-                => (A.Exp e -> A.Exp e -> exp e)
-                -> exp e
+                => (e -> e -> e)
+                -> e
                 -> acc (A.Array (sh A.:. P.Int) e)
-                -> PreAcc acc exp (A.Array sh e)
+                -> PreAcc acc (A.Array sh e)
 -- 
   -- Fold1         :: (Shape sh, Elt e)
                 -- => (Exp e -> Exp e -> exp e)
@@ -203,10 +203,11 @@ data PreAcc acc exp as where
   -- show (Fold f var sh)  = "(Fold: "  Prelude.++ show (show sh, show var) Prelude.++ ")"
   -- show (InArray sh arr) = "(Array: " Prelude.++ show (show sh, show arr) Prelude.++ ")"
 
-newtype AccSubset a = AccSubset (PreAcc AccSubset A.Exp a)
+newtype AccSubset a = AccSubset (PreAcc AccSubset a)
+--data PreAcc acc exp as where
 
 map :: (A.Shape ix, A.Elt a, T.IsNum a)
-    => (A.Exp a -> A.Exp a)
+    => (a -> a)
     -> AccSubset (A.Array ix a)
     -> AccSubset (A.Array ix a)
 map = AccSubset $$ Map
@@ -260,8 +261,11 @@ infixr 0 $$
 
 compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
 compileToAcc (AccSubset (Use arr))   = A.use   P.$ arr -- S.Map g $ compileToAccUnwrapped arr
-compileToAcc (AccSubset (Map g arr)) = A.map g P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
+--compileToAcc (AccSubset (Map g arr)) = A.map g P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
 compileToAcc _ = P.undefined
+
+liftExp :: (A.Elt a, A.Elt b) => (a -> b) -> A.Exp a -> A.Exp b
+liftExp f x = P.undefined
 
 --compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
 --compileToAcc input = S.Acc (compileToAccUnwrapped input)
