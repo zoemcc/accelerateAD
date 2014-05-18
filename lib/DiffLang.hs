@@ -4,6 +4,8 @@
 {-# LANGUAGE TypeOperators         #-}
 {-# LANGUAGE StandaloneDeriving    #-}
 {-# LANGUAGE Rank2Types #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+
 module DiffLang (PreAcc(..), AccSubset(..), compileToAcc, map, use) where
 
 import qualified Prelude as P
@@ -101,10 +103,10 @@ data PreAcc acc as where
                 -- -> acc (A.Array sh e)
                 -- -> PreAcc acc exp (A.Array sh e')
 
-  Map           :: (A.Shape sh, A.Elt e, T.IsNum e)
-                => (e -> e)
+  Map           :: (A.Shape sh, A.Elt e, T.IsNum e, A.Elt e', T.IsNum e')
+                => ((P.Num a, P.Num b) => a -> b)
                 -> acc (A.Array sh e)
-                -> PreAcc acc (A.Array sh e)
+                -> PreAcc acc (A.Array sh e')
 
   ZipWith       :: (A.Shape sh, A.Elt e1, A.Elt e2, A.Elt e3)
                 => (e1 -> e2 -> e3)
@@ -206,10 +208,10 @@ data PreAcc acc as where
 newtype AccSubset a = AccSubset (PreAcc AccSubset a)
 --data PreAcc acc exp as where
 
-map :: (A.Shape ix, A.Elt a, T.IsNum a)
-    => (a -> a)
-    -> AccSubset (A.Array ix a)
-    -> AccSubset (A.Array ix a)
+map :: (A.Shape ix, A.Elt e, T.IsNum e, A.Elt e', T.IsNum e')
+    => ((P.Num a, P.Num b) => a -> b)
+    -> AccSubset (A.Array ix e)
+    -> AccSubset (A.Array ix e')
 map = AccSubset $$ Map
 
 use :: A.Arrays arrays => arrays -> AccSubset arrays
@@ -259,13 +261,24 @@ infixr 0 $$
 --compileToAcc (Fold f var sh) arr = A.fold f 0.0 $ compileToAcc var arr
 --compileToAcc (InArray sh b)  arr = arr
 
-compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
+compileToAcc :: (A.Shape sh', A.Elt e', A.IsNum e') => AccSubset (A.Array sh' e') -> S.Acc (A.Array sh' e')
 compileToAcc (AccSubset (Use arr))   = A.use   P.$ arr -- S.Map g $ compileToAccUnwrapped arr
---compileToAcc (AccSubset (Map g arr)) = A.map g P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
+compileToAcc (AccSubset (Map g (arr :: AccSubset (A.Array sh' e)))) =  --P.undefined 
+  --A.map (g :: S.Exp e -> S.Exp e') P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
+  A.map gExp P.$ compileToAcc arr -- S.Map g $ compileToAccUnwrapped arr
+    where 
+      gExp :: (A.Elt e, A.IsNum e) => S.Exp e -> S.Exp e'
+      gExp = g
 compileToAcc _ = P.undefined
 
 liftExp :: (A.Elt a, A.Elt b) => (a -> b) -> A.Exp a -> A.Exp b
+--liftExp f x = f x
 liftExp f x = P.undefined
+
+--runExp :: (P.Num a, P.Num b, A.Elt e, A.IsNum e) => (a -> b) -> A.Exp e -> b
+runExp :: (P.Fractional a) => (a -> b) -> P.Double -> b
+--runExp f x = f x
+runExp f x = P.undefined
 
 --compileToAcc :: (A.Shape sh, A.Elt e) => AccSubset (A.Array sh e) -> S.Acc (A.Array sh e)
 --compileToAcc input = S.Acc (compileToAccUnwrapped input)
